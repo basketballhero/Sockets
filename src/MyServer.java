@@ -118,6 +118,13 @@ public class MyServer {
 			
 			//When this client types "exit", the loop is terminated and the following exit code is executed
 			
+			//Says goodbye to the client
+			try {
+				dout.writeUTF("*** Bye " + name + " ***");
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			
 			//Tells everyone else that this client just left
 			for(int i = 0; i < threads.length; i++) {
 				if(threads[i] != null) {

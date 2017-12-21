@@ -23,18 +23,25 @@ public class MyClient implements Runnable {
 			
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
+			closed = true;
 		} catch (IOException e) {
 			e.printStackTrace();
+			closed = true;
 		}
 		
 		Scanner scanner = new Scanner(System.in);
 		
 		String message = "";
 		new Thread(new MyClient()).start();
-		while(!(message = scanner.nextLine()).equals("exit")) {
+		while(!closed) {
 			try {
+				message = scanner.nextLine();
 				dout.writeUTF(message);
 				dout.flush();
+				
+				if(closed == true) {
+					break;
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -56,14 +63,21 @@ public class MyClient implements Runnable {
 	@Override
 	public void run() {
 		String input = "";
+		read:
 		while(!closed) {
 			try {
 				input = din.readUTF();
+				if(input.startsWith("*** Bye")) {
+					closed = true;
+					break read;
+				}
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 			System.out.println(input);
 		}
+		closed = true;
+		System.out.println("thread closed");
 	}
 	
 	
