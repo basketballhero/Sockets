@@ -94,6 +94,9 @@ public class MultiThreadChatClient implements Runnable {
           break;
       }
       closed = true;
+      if(closed == true) {
+    	  System.out.println("Closed");
+      }
     } catch (IOException e) {
       System.err.println("IOException:  " + e);
     }
