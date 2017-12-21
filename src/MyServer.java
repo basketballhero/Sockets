@@ -12,7 +12,8 @@ public class MyServer {
 		
 		// Starts the server
 		try {
-			ss = new ServerSocket(6666);
+			ss = new ServerSocket();
+			ss.bind(new InetSocketAddress("10.30.136.238", 6666));
 		} catch (IOException e) {
 			e.printStackTrace();
 		}

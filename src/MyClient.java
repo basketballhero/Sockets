@@ -17,7 +17,7 @@ public class MyClient implements Runnable {
 		socket = null;
 		dout = null;
 		try {
-			socket = new Socket("localhost", 6666);
+			socket = new Socket("10.30.136.238", 6666);
 			dout = new DataOutputStream(socket.getOutputStream());
 			din = new DataInputStream(socket.getInputStream());
 			
