@@ -78,21 +78,19 @@ public class MyServer {
 
 		public void run() {
 			//Executed as soon as the client connects: tells each client that a new client has joined
-			for(int i = 0; i < threads.length; i++) {
-				if(threads[i] != null && threads[i] != this) {
-					try {
-						threads[i].dout.writeUTF("A new client has joined");
-						threads[i].dout.flush();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				}
-			}
-			
 			try {
 				dout.writeUTF("What is your name?");
 				name = din.readUTF();
 				dout.flush();
+				
+				dout.writeUTF("Welcome, " + name + " to the server!");
+				
+				for(int i = 0; i < threads.length; i++) {
+					if(threads[i] != null && threads[i] != this) {
+						threads[i].dout.writeUTF(name + " has joined the server!");
+						threads[i].dout.flush();
+					}
+				}
 			} catch (IOException e1) {
 				e1.printStackTrace();
 			}
@@ -101,7 +99,11 @@ public class MyServer {
 			//Main loop that echoes input coming from this client to all other clients
 			String message = "";
 			try {
-				while((message = din.readUTF()) != "exit") {
+				while(true) {
+					message = din.readUTF();
+					if(message.equals("exit")) {
+						break;
+					}
 					for(int i = 0; i < threads.length; i++) {
 						if(threads[i] != null && threads[i] != this) {
 							threads[i].dout.writeUTF("<" + name + "> " + message);

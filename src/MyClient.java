@@ -31,7 +31,7 @@ public class MyClient implements Runnable {
 		
 		String message = "";
 		new Thread(new MyClient()).start();
-		while((message = scanner.nextLine()) != "exit") {
+		while(!(message = scanner.nextLine()).equals("exit")) {
 			try {
 				dout.writeUTF(message);
 				dout.flush();
