@@ -3,35 +3,147 @@ import java.net.*;
 
 public class MyServer {
 	public static void main(String[] args) {
+		
+		// Initializes variables
+		ServerSocket ss = null;
+		int clientCounter = 0;
+		Socket s = null;
+		clientThread[] threads = new clientThread[10];
+		
+		// Starts the server
 		try {
-			// Starts the server
-			ServerSocket ss = new ServerSocket(6666);
-			System.out.println("Server running");
+			ss = new ServerSocket(6666);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		System.out.println("Server running");		
+		
+		// Creates a new socket whenever a client joins and then starts a thread to communicate with said client
+		while(clientCounter < 10) {
+			try {
+				s = ss.accept();
+				System.out.println("Client accepted");
+				
+				for(int i = 0; i < threads.length; i++) {
+					if(threads[i] == null) {
+						(threads[i] = new clientThread(s, threads)).start();
+						break;
+					}
+				}
+				
+				clientCounter++;
+				
+			} catch (IOException e) {
+				e.printStackTrace();
+			}	
+		}
+		
+		//Outputs to the client
+		//DataOutputStream dout = new DataOutputStream(s.getOutputStream());
+		//dout.writeUTF("Welcome to the server! Type 'stop' to close the connection at any time.");
+		//dout.flush();
+		
+		
+		//Closes server automatically
+		try {
+			ss.close();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("Server closed");
+
+	}
+	
+	static class clientThread extends Thread {
+		
+		Socket clientSocket;
+		clientThread[] threads;
+		DataOutputStream dout;
+		DataInputStream din;
+		String name;
+		
+		public clientThread(Socket clientSocket, clientThread[] threads) {
+			this.clientSocket = clientSocket;
+			this.threads = threads;
 			
-			// Confirms connection
-			Socket s = ss.accept();	
-			System.out.println("Client accepted");
-			
-			//Outputs to the client
-			DataOutputStream dout = new DataOutputStream(s.getOutputStream());
-			dout.writeUTF("Welcome to the server! Type 'stop' to close the connection at any time.");
-			dout.flush();
-			
-			//Handles input from client
-			DataInputStream dis = new DataInputStream(s.getInputStream());
-			String str = "";
-			
-			//Waits for client input
-			while(!str.equals("stop")) {
-				str = (String) dis.readUTF();
-				System.out.println("Client says " + str);
+			try {
+				this.dout = new DataOutputStream(clientSocket.getOutputStream());
+				this.din = new DataInputStream(clientSocket.getInputStream());
+			} catch (IOException e) {
+				e.printStackTrace();
 			}
 			
-			ss.close();
-			System.out.println("Server closed");
-
-		} catch (Exception e) {
-			System.out.println(e);
 		}
+
+		public void run() {
+			//Executed as soon as the client connects: tells each client that a new client has joined
+			for(int i = 0; i < threads.length; i++) {
+				if(threads[i] != null && threads[i] != this) {
+					try {
+						threads[i].dout.writeUTF("A new client has joined");
+						threads[i].dout.flush();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			
+			try {
+				dout.writeUTF("What is your name?");
+				name = din.readUTF();
+				dout.flush();
+			} catch (IOException e1) {
+				e1.printStackTrace();
+			}
+			
+			
+			//Main loop that echoes input coming from this client to all other clients
+			String message = "";
+			try {
+				while((message = din.readUTF()) != "exit") {
+					for(int i = 0; i < threads.length; i++) {
+						if(threads[i] != null && threads[i] != this) {
+							threads[i].dout.writeUTF("<" + name + "> " + message);
+							threads[i].dout.flush();
+						}
+					}
+				}
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			
+			//When this client types "exit", the loop is terminated and the following exit code is executed
+			
+			//Tells everyone else that this client just left
+			for(int i = 0; i < threads.length; i++) {
+				if(threads[i] != null) {
+					try {
+						threads[i].dout.writeUTF("A client has left");
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			
+			//Declares itself to be null to make space for more clients
+			for(int i = 0; i < threads.length; i++) {
+				if(threads[i] == this) {
+					threads[i] = null;
+				}
+			}
+			
+			//Closes the readers
+			try {
+				din.close();
+				dout.close();
+				clientSocket.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+		
 	}
 }

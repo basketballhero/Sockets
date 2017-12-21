@@ -102,39 +102,38 @@ class clientThread extends Thread {
       is = new DataInputStream(clientSocket.getInputStream());
       os = new PrintStream(clientSocket.getOutputStream());
       dout = new DataOutputStream(clientSocket.getOutputStream());
-      //os.println("Enter your name.");
+      
       dout.writeUTF("Enter your name");
       String name = is.readUTF().trim();
-      /*os.println("Hello " + name
-          + " to our chat room.\nTo leave enter /quit in a new line");*/
       dout.writeUTF("Hello " + name + " to our chat room.\nTo leave enter /quit in a new line");
-      for (int i = 0; i < maxClientsCount; i++) {
-        if (threads[i] != null && threads[i] != this) {
-          /*threads[i].os.println("*** A new user " + name
-              + " entered the chat room !!! ***");*/
-        	threads[i].dout.writeUTF("*** A new user " + name + "entered the chat room ***");
-        }
-      }
+      
+	  for (int i = 0; i < maxClientsCount; i++) {
+	     if (threads[i] != null && threads[i] != this) {
+	       	threads[i].dout.writeUTF("*** A new user " + name + " entered the chat room ***");
+	       }
+	  }
+	  
       while (true) {
         String line = is.readUTF();
         if (line.startsWith("/quit")) {
           break;
         }
-        for (int i = 0; i < maxClientsCount; i++) {
-          if (threads[i] != null) {
-            //threads[i].os.println("<" + name + "&gr; " + line);
-            threads[i].dout.writeUTF("<" + name + "> " + line);
-          }
-        }
+	    synchronized(this) {
+        	for (int i = 0; i < maxClientsCount; i++) {
+	          if (threads[i] != null) {
+	            threads[i].dout.writeUTF("<" + name + "> " + line);
+	          }
+	        }
+	      }
+	      for (int i = 0; i < maxClientsCount; i++) {
+	        if (threads[i] != null && threads[i] != this) {
+	          /*threads[i].os.println("*** The user " + name
+	              + " is leaving the chat room !!! ***");*/
+	        	threads[i].dout.writeUTF("*** the user " + name + " is leaving the chat room! ***");
+	        }
+	      }
       }
-      for (int i = 0; i < maxClientsCount; i++) {
-        if (threads[i] != null && threads[i] != this) {
-          /*threads[i].os.println("*** The user " + name
-              + " is leaving the chat room !!! ***");*/
-        	threads[i].dout.writeUTF("*** the user " + name + " is leaving the chat room! ***");
-        }
-      }
-      //os.println("*** Bye " + name + " ***");
+      
       dout.writeUTF("*** Bye " + name + " ***");
 
       /*
